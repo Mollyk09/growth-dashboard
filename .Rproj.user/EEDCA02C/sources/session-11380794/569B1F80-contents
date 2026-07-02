@@ -3,9 +3,7 @@ library(leaflet)
 library(sf)
 library(dplyr)
 library(plotly)
-library(tigris)
-
-install.packages("rsconnect")   # if you don't already have it
+library(tigris)   
 library(rsconnect)
 
 writeManifest()
