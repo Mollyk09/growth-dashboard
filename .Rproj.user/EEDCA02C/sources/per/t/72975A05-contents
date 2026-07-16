@@ -8,11 +8,11 @@ library(here)
 
 # ── Data ───────────────────────────────────────────────────────────────────────
 
-acs_data <- readRDS(here("acs_child_indicators.rds"))
+acs_data <- readRDS(here("02_tidy_data", "acs_data_aggregated", "acs_child_indicators.rds"))
 
 # ── Join in supplemental county data: urban/rural population split, MMR
 # vaccination rate, and Child Opportunity Index scores ─────────────────────
-other_data <- readRDS(here("all_other_data.rds")) |>
+other_data <- readRDS(here("02_tidy_data", "agg_other_data", "all_other_data.rds")) |>
   select(
     GEOID, POPPCT_RUR, POP_URB, POP_RUR, POP_COU, mmr_rates,
     r_COI_nat, r_ED_nat, r_HE_nat, r_SE_nat,
@@ -74,9 +74,9 @@ counties_sf <- county_shapes |>
 
 state_fips_lookup <- data.frame(
   fips = c("01","02","04","05","06","08","09","10","11","12","13","15","16",
-           "17","18","19","20","21","22","23","24","25","26","27","28","29",
-           "30","31","32","33","34","35","36","37","38","39","40","41","42",
-           "44","45","46","47","48","49","50","51","53","54","55","56"),
+            "17","18","19","20","21","22","23","24","25","26","27","28","29",
+            "30","31","32","33","34","35","36","37","38","39","40","41","42",
+            "44","45","46","47","48","49","50","51","53","54","55","56"),
   state_name = c("Alabama","Alaska","Arizona","Arkansas","California","Colorado",
                  "Connecticut","Delaware","District of Columbia","Florida","Georgia",
                  "Hawaii","Idaho","Illinois","Indiana","Iowa","Kansas","Kentucky",
@@ -117,8 +117,8 @@ STATE_LINE_MAX_ZOOM <- 8
 
 # Plotly modebar: keep only "Download plot as PNG"
 MODEBAR_REMOVE <- c("zoom2d", "pan2d", "select2d", "lasso2d", "zoomIn2d", "zoomOut2d",
-                    "autoScale2d", "resetScale2d", "hoverClosestCartesian",
-                    "hoverCompareCartesian", "toggleSpikelines")
+                     "autoScale2d", "resetScale2d", "hoverClosestCartesian",
+                     "hoverCompareCartesian", "toggleSpikelines")
 
 # Per-variable gradient for quintile choropleths: light tint → full brand color
 # Each share variable gets its own single-hue gradient (5 shades, low → high)
@@ -207,13 +207,13 @@ var_meta <- data.frame(
 var_meta$is_coi_score <- grepl("^r_", var_meta$col)
 
 share_ch     <- setNames(var_meta$col[var_meta$group == "core" & var_meta$is_share],
-                         var_meta$label[var_meta$group == "core" & var_meta$is_share])
+                          var_meta$label[var_meta$group == "core" & var_meta$is_share])
 count_ch     <- setNames(var_meta$col[var_meta$group == "core" & !var_meta$is_share],
-                         var_meta$label[var_meta$group == "core" & !var_meta$is_share])
+                          var_meta$label[var_meta$group == "core" & !var_meta$is_share])
 coi_map_ch   <- setNames(var_meta$col[var_meta$group == "coi" & !var_meta$is_subdomain],
-                         var_meta$label[var_meta$group == "coi" & !var_meta$is_subdomain])
+                          var_meta$label[var_meta$group == "coi" & !var_meta$is_subdomain])
 choro_var_ch <- list("Percentages" = share_ch, "Counts" = count_ch,
-                     "Child Opportunity Index" = coi_map_ch)
+                      "Child Opportunity Index" = coi_map_ch)
 
 # ── Info panel HTML builder ────────────────────────────────────────────────────
 
@@ -266,7 +266,7 @@ build_info_html <- function(row_df, header_color = "#cf2e2e", show_header = TRUE
     "<div style='font-family:Arial,sans-serif;line-height:1.5'>",
     header_html,
     "<table style='width:100%;border-collapse:collapse'>",
-    
+
     info_group("Counts"),
     info_section("Population"),
     info_row("Total Population",           fmt_num(r$total_population), TRUE),
@@ -284,7 +284,7 @@ build_info_html <- function(row_df, header_color = "#cf2e2e", show_header = TRUE
     info_row("Urban Population",             fmt_num(r$POP_URB), TRUE),
     info_row("Rural Population",             fmt_num(r$POP_RUR)),
     info_row("Total Pop. (Urban/Rural File)", fmt_num(r$POP_COU), TRUE),
-    
+
     info_group("Shares (%)"),
     info_section("Young Children (Under 6)"),
     info_row("Share of Population",        fmt_pct(r$children_under6_share), TRUE),
@@ -299,7 +299,7 @@ build_info_html <- function(row_df, header_color = "#cf2e2e", show_header = TRUE
     info_row("Share Living in Rural Area",   fmt_pct(r$POPPCT_RUR), TRUE),
     info_row("MMR Vaccination Rate, 2024-25", fmt_pct(r$mmr_rates)),
     "</table>",
-    
+
     # Collapsed by default (click to expand) — a native <details>/<summary>
     # disclosure so the long COI score list doesn't clutter the panel. Each
     # domain row is itself a nested disclosure for its subdomain scores.
@@ -312,21 +312,21 @@ build_info_html <- function(row_df, header_color = "#cf2e2e", show_header = TRUE
     info_section("COI Scores (0–100, Nationally Normed)"),
     info_row("Overall", fmt_score(r$r_COI_nat), TRUE),
     "</table>",
-    
+
     domain_details_open("Education", fmt_score(r$r_ED_nat)),
     info_row("Early Childhood Education",          fmt_score(r$r_ED_EC_nat), TRUE),
     info_row("Elementary Education",                fmt_score(r$r_ED_EL_nat)),
     info_row("Educational Resources",               fmt_score(r$r_ED_ER_nat), TRUE),
     info_row("Secondary & Post-Secondary Education", fmt_score(r$r_ED_SP_nat)),
     domain_details_close,
-    
+
     domain_details_open("Health & Environment", fmt_score(r$r_HE_nat)),
     info_row("Pollution",                  fmt_score(r$r_HE_EP_nat), TRUE),
     info_row("Health Resources",           fmt_score(r$r_HE_HR_nat)),
     info_row("Safety-Related Resources",   fmt_score(r$r_HE_SE_nat), TRUE),
     info_row("Healthy Environments",       fmt_score(r$r_HE_HE_nat)),
     domain_details_close,
-    
+
     domain_details_open("Social & Economic", fmt_score(r$r_SE_nat)),
     info_row("Socio-Economic Inequity", fmt_score(r$r_SE_EI_nat), TRUE),
     info_row("Employment",              fmt_score(r$r_SE_EO_nat)),
@@ -335,7 +335,7 @@ build_info_html <- function(row_df, header_color = "#cf2e2e", show_header = TRUE
     info_row("Social Resources",        fmt_score(r$r_SE_SR_nat), TRUE),
     info_row("Wealth",                  fmt_score(r$r_SE_WL_nat)),
     domain_details_close,
-    
+
     "</details>",
     "</div>"
   )
@@ -350,7 +350,7 @@ national_info_html <- build_info_html(national, header_color = "#555555")
 # COI scores and MMR rate aren't part of this aggregate.
 build_aggregate_html <- function(df) {
   n <- nrow(df)
-  
+
   tot_pop      <- sum(df$total_population, na.rm = TRUE)
   u6           <- sum(df$children_under6_count, na.rm = TRUE)
   u6_pov       <- sum(df$children_under6_poverty_count, na.rm = TRUE)
@@ -362,9 +362,9 @@ build_aggregate_html <- function(df) {
   coc_u5       <- sum(df$children_of_color_u5_count, na.rm = TRUE)
   rur_pop      <- sum(df$POP_RUR, na.rm = TRUE)
   tot_pop_urf  <- sum(df$POP_COU, na.rm = TRUE)
-  
+
   safe_div <- function(num, den) if (is.na(den) || den == 0) NA_real_ else num / den
-  
+
   share_u6           <- safe_div(u6, tot_pop)
   share_u6_pov       <- safe_div(u6_pov, u6)
   share_u6_uninsured <- safe_div(u6_uninsured, u6)
@@ -372,18 +372,18 @@ build_aggregate_html <- function(df) {
   share_coc_u18      <- safe_div(coc_u18, tot_u18)
   share_coc_u5       <- safe_div(coc_u5, tot_u5)
   share_rural        <- safe_div(rur_pop, tot_pop_urf)
-  
+
   header_html <- paste0(
     "<div style='background:", BAR_COUNTY_COLOR, ";color:#fff;padding:8px 10px;",
     "font-size:13px;font-weight:700;border-radius:4px 4px 0 0;margin-bottom:6px'>",
     n, " Counties Selected — Aggregate</div>"
   )
-  
+
   paste0(
     "<div style='font-family:Arial,sans-serif;line-height:1.5'>",
     header_html,
     "<table style='width:100%;border-collapse:collapse'>",
-    
+
     info_group("Counts"),
     info_section("Population"),
     info_row("Total Population",           fmt_num(tot_pop), TRUE),
@@ -400,7 +400,7 @@ build_aggregate_html <- function(df) {
     info_row("Children of Color (U5)",     fmt_num(coc_u5), TRUE),
     info_section("Rural Population"),
     info_row("Rural Population",           fmt_num(rur_pop)),
-    
+
     info_group("Shares (%)"),
     info_section("Young Children (Under 6)"),
     info_row("Share of Population",        fmt_pct(share_u6), TRUE),
@@ -672,88 +672,88 @@ app_css <- "
 ui <- fillPage(
   padding = 0,
   tags$head(tags$style(HTML(app_css))),
-  
+
   div(id = "app-header",
-      tags$h4("Child Well-Being County Explorer"),
-      tags$span("Census Data Estimates | County-Level Child Indicators")
+    tags$h4("Child Well-Being County Explorer"),
+    tags$span("Census Data Estimates | County-Level Child Indicators")
   ),
-  
+
   div(id = "app-body",
-      
-      div(id = "sidebar",
-          div(class = "sec-head", "Navigate"),
-          selectInput("zoom_state", NULL,
-                      choices  = c("— Select a State —" = "",
-                                   setNames(state_fips_lookup$state_name,
-                                            state_fips_lookup$state_name)),
-                      selected = ""),
-          conditionalPanel(
-            condition = "input.zoom_state != ''",
-            selectInput("zoom_county", NULL, choices = c("— Whole State —" = ""))
-          ),
-          actionButton("btn_zoom", "Zoom to Selection",
-                       class = "btn-primary btn-sm", width = "100%"),
-          
-          div(class = "sec-head", "Choropleth"),
-          selectInput("choro_var", NULL,
-                      choices  = c("None" = "", choro_var_ch),
-                      selected = ""),
-          
-          div(class = "sec-head", "Add Counties"),
-          p(style = "font-size:11px;color:#777;margin-bottom:5px;",
-            "Search here, or use the selection controls on the map."),
-          selectInput("sel_counties", NULL,
-                      choices  = county_choices_by_state,
-                      multiple = TRUE, selectize = TRUE),
-          actionButton("btn_clear", "Clear All",
-                       class = "btn-sm btn-default", width = "100%"),
-          br(), br(),
-          
-          div(class = "sec-head", "Chart Variable"),
-          selectInput("chart_var", NULL,
-                      choices  = choro_var_ch,
-                      selected = "children_under6_poverty_share"),
-          # Subdomain drill-down only makes sense for the 3 COI domain scores —
-          # "Overall" and the core ACS indicators have no subdomains.
-          conditionalPanel(
-            condition = "input.chart_var == 'r_ED_nat' || input.chart_var == 'r_HE_nat' || input.chart_var == 'r_SE_nat'",
-            selectInput("chart_var_sub", "Subdomain (optional)",
-                        choices = c("— Domain Overall —" = ""))
-          ),
-          
-          div(class = "sec-head", "Selected"),
-          uiOutput("county_badges")
+
+    div(id = "sidebar",
+      div(class = "sec-head", "Navigate"),
+      selectInput("zoom_state", NULL,
+                  choices  = c("— Select a State —" = "",
+                               setNames(state_fips_lookup$state_name,
+                                        state_fips_lookup$state_name)),
+                  selected = ""),
+      conditionalPanel(
+        condition = "input.zoom_state != ''",
+        selectInput("zoom_county", NULL, choices = c("— Whole State —" = ""))
       ),
-      
-      div(id = "center-col",
-          div(id = "map-wrap",
-              leafletOutput("map", height = "100%")
-          ),
-          div(id = "chart-wrap",
-              uiOutput("chart_title"),
-              plotlyOutput("bar_chart", height = "88%")
-          )
+      actionButton("btn_zoom", "Zoom to Selection",
+                   class = "btn-primary btn-sm", width = "100%"),
+
+      div(class = "sec-head", "Choropleth"),
+      selectInput("choro_var", NULL,
+                  choices  = c("None" = "", choro_var_ch),
+                  selected = ""),
+
+      div(class = "sec-head", "Add Counties"),
+      p(style = "font-size:11px;color:#777;margin-bottom:5px;",
+        "Search here, or use the selection controls on the map."),
+      selectInput("sel_counties", NULL,
+                  choices  = county_choices_by_state,
+                  multiple = TRUE, selectize = TRUE),
+      actionButton("btn_clear", "Clear All",
+                   class = "btn-sm btn-default", width = "100%"),
+      br(), br(),
+
+      div(class = "sec-head", "Chart Variable"),
+      selectInput("chart_var", NULL,
+                  choices  = choro_var_ch,
+                  selected = "children_under6_poverty_share"),
+      # Subdomain drill-down only makes sense for the 3 COI domain scores —
+      # "Overall" and the core ACS indicators have no subdomains.
+      conditionalPanel(
+        condition = "input.chart_var == 'r_ED_nat' || input.chart_var == 'r_HE_nat' || input.chart_var == 'r_SE_nat'",
+        selectInput("chart_var_sub", "Subdomain (optional)",
+                    choices = c("— Domain Overall —" = ""))
       ),
-      
-      div(id = "info-col",
-          uiOutput("info_view_toggle"),
-          div(class = "info-head", uiOutput("info_label")),
-          uiOutput("info_content")
+
+      div(class = "sec-head", "Selected"),
+      uiOutput("county_badges")
+    ),
+
+    div(id = "center-col",
+      div(id = "map-wrap",
+        leafletOutput("map", height = "100%")
+      ),
+      div(id = "chart-wrap",
+        uiOutput("chart_title"),
+        plotlyOutput("bar_chart", height = "88%")
       )
+    ),
+
+    div(id = "info-col",
+      uiOutput("info_view_toggle"),
+      div(class = "info-head", uiOutput("info_label")),
+      uiOutput("info_content")
+    )
   )
 )
 
 # ── Server ─────────────────────────────────────────────────────────────────────
 
 server <- function(input, output, session) {
-  
+
   selected_geo         <- reactiveVal(character(0))
   focused_geo          <- reactiveVal(NULL)
   sync_in_flight       <- reactiveVal(FALSE)
   last_was_shape_click <- reactiveVal(FALSE)
   last_was_freehand    <- reactiveVal(FALSE)
   info_view            <- reactiveVal("detail")  # "detail" | "aggregate"
-  
+
   # ── Base map ──────────────────────────────────────────────────────────────────
   output$map <- renderLeaflet({
     leaflet(counties_sf, options = leafletOptions(preferCanvas = TRUE)) |>
@@ -781,7 +781,7 @@ server <- function(input, output, session) {
       addScaleBar(position = "bottomleft") |>
       htmlwidgets::onRender(map_controls_js)
   })
-  
+
   # ── State outlines: visible until zoomed in past STATE_LINE_MAX_ZOOM ───────────
   # (i.e. until roughly only a single state fills the viewport)
   state_lines_shown <- reactiveVal(TRUE)
@@ -803,12 +803,12 @@ server <- function(input, output, session) {
       state_lines_shown(FALSE)
     }
   })
-  
+
   # ── Choropleth ─────────────────────────────────────────────────────────────────
   observeEvent(input$choro_var, {
     var   <- input$choro_var
     proxy <- leafletProxy("map", session)
-    
+
     if (is.null(var) || var == "") {
       proxy |>
         addPolygons(
@@ -824,11 +824,11 @@ server <- function(input, output, session) {
         removeControl("choro_legend")
       return()
     }
-    
+
     is_shr <- var_meta$is_share[var_meta$col == var]
     lbl    <- var_meta$label[var_meta$col == var]
     vals   <- counties_sf[[var]]
-    
+
     if (is_shr) {
       vals_clean <- vals[!is.na(vals)]
       q_breaks   <- quantile(vals_clean, probs = seq(0, 1, 0.2))
@@ -844,7 +844,7 @@ server <- function(input, output, session) {
         sprintf("%.1f", q_breaks[-1] * 100), "%"
       )
       leg_title <- paste0("<b>", lbl, "</b>")
-      
+
       proxy |>
         addPolygons(
           data = counties_sf, layerId = ~GEOID, group = "counties",
@@ -865,11 +865,11 @@ server <- function(input, output, session) {
           position = "bottomright",
           opacity  = 0.9
         )
-      
+
     } else {
       is_coi_score <- var_meta$is_coi_score[var_meta$col == var]
       vals_clean   <- vals[!is.na(vals)]
-      
+
       if (is_coi_score) {
         # COI scores are already normed 0-100, so the generic ±2 SD outlier
         # cap (built for uncapped population counts) doesn't apply here —
@@ -890,7 +890,7 @@ server <- function(input, output, session) {
                               else "")
       }
       pal <- colorNumeric(palette = CONTINUOUS_RAMP, domain = c(lo, hi),
-                          na.color = "#cccccc")
+                           na.color = "#cccccc")
       proxy |>
         addPolygons(
           data = counties_sf, layerId = ~GEOID, group = "counties",
@@ -914,7 +914,7 @@ server <- function(input, output, session) {
         )
     }
   })
-  
+
   # ── County click: info panel + toggle selection ────────────────────────────────
   observeEvent(input$map_shape_click, {
     last_was_shape_click(TRUE)
@@ -937,11 +937,11 @@ server <- function(input, output, session) {
     updateSelectInput(session, "sel_counties", selected = new_geo)
     sync_in_flight(FALSE)
   })
-  
+
   # ── Background click: deselect (debounced so shape click fires first) ──────────
   map_click_r       <- reactive(input$map_click)
   map_click_delayed <- debounce(map_click_r, 300)
-  
+
   observeEvent(map_click_delayed(), {
     if (last_was_shape_click()) { last_was_shape_click(FALSE); return() }
     if (last_was_freehand())    { last_was_freehand(FALSE);    return() }
@@ -951,7 +951,7 @@ server <- function(input, output, session) {
     updateSelectInput(session, "sel_counties", selected = character(0))
     sync_in_flight(FALSE)
   }, ignoreInit = TRUE, ignoreNULL = TRUE)
-  
+
   # ── Freehand path received: select every county the line crosses ──────────────
   # (the map-side control only allows freehand drawing in Multi-select mode)
   observeEvent(input$freehand_path, {
@@ -961,7 +961,7 @@ server <- function(input, output, session) {
       mat        <- do.call(rbind, lapply(coords_raw, function(p) c(p[[1]], p[[2]])))
       drawn_line <- st_sfc(st_linestring(mat), crs = 4326)
       new_geoids <- counties_sf$GEOID[lengths(st_intersects(counties_sf, drawn_line)) > 0]
-      
+
       if (length(new_geoids) > 0) {
         new_geo <- unique(c(selected_geo(), new_geoids))
         selected_geo(new_geo)
@@ -972,7 +972,7 @@ server <- function(input, output, session) {
       }
     }, error = function(e) message("Freehand select error: ", e$message))
   })
-  
+
   # ── Dropdown → selected_geo ───────────────────────────────────────────────────
   observeEvent(input$sel_counties, {
     if (sync_in_flight()) return()
@@ -995,7 +995,7 @@ server <- function(input, output, session) {
       }
     }
   }, ignoreNULL = FALSE)
-  
+
   # ── Switching to single-select trims any existing multi-selection ─────────────
   observeEvent(input$select_mode, {
     if (identical(input$select_mode, "single") && length(selected_geo()) > 1) {
@@ -1007,7 +1007,7 @@ server <- function(input, output, session) {
       sync_in_flight(FALSE)
     }
   })
-  
+
   # ── Clear all ──────────────────────────────────────────────────────────────────
   observeEvent(input$btn_clear, {
     selected_geo(character(0))
@@ -1016,7 +1016,7 @@ server <- function(input, output, session) {
     updateSelectInput(session, "sel_counties", selected = character(0))
     sync_in_flight(FALSE)
   })
-  
+
   # ── Selection highlight + auto-zoom ───────────────────────────────────────────
   observe({
     cur   <- selected_geo()
@@ -1043,7 +1043,7 @@ server <- function(input, output, session) {
     bb <- st_bbox(sel_sf)
     proxy |> flyToBounds(bb[["xmin"]], bb[["ymin"]], bb[["xmax"]], bb[["ymax"]])
   })
-  
+
   # ── Navigate ──────────────────────────────────────────────────────────────────
   observeEvent(input$zoom_state, {
     if (is.null(input$zoom_state) || input$zoom_state == "") {
@@ -1058,7 +1058,7 @@ server <- function(input, output, session) {
                                    setNames(st_cty$GEOID, st_cty$NAME)),
                       selected = "")
   })
-  
+
   observeEvent(input$btn_zoom, {
     req(!is.null(input$zoom_state) && input$zoom_state != "")
     target_sf <- if (!is.null(input$zoom_county) && input$zoom_county != "") {
@@ -1070,7 +1070,7 @@ server <- function(input, output, session) {
     leafletProxy("map", session) |>
       flyToBounds(bb[["xmin"]], bb[["ymin"]], bb[["xmax"]], bb[["ymax"]])
   })
-  
+
   # ── Badges ────────────────────────────────────────────────────────────────────
   output$county_badges <- renderUI({
     cur <- selected_geo()
@@ -1079,12 +1079,12 @@ server <- function(input, output, session) {
     nms <- counties_sf$NAME[counties_sf$GEOID %in% cur]
     tags$div(lapply(nms, function(n) span(class = "badge-cty", n)))
   })
-  
+
   # ── Info panel: clicking a name in the multi-county picker re-focuses it ───────
   observeEvent(input$info_pick_county, {
     if (input$info_pick_county %in% selected_geo()) focused_geo(input$info_pick_county)
   })
-  
+
   # ── Info panel: County Detail vs. Selected Counties Aggregate toggle ───────────
   observeEvent(input$view_detail_btn,    { info_view("detail") })
   observeEvent(input$view_aggregate_btn, {
@@ -1094,7 +1094,7 @@ server <- function(input, output, session) {
   observe({
     if (info_view() == "aggregate" && length(selected_geo()) < 2) info_view("detail")
   })
-  
+
   output$info_view_toggle <- renderUI({
     n             <- length(selected_geo())
     can_aggregate <- n >= 2
@@ -1111,7 +1111,7 @@ server <- function(input, output, session) {
                                   if (!can_aggregate) "opacity:.45;cursor:not-allowed;" else ""))
     )
   })
-  
+
   # ── Info panel ─────────────────────────────────────────────────────────────────
   output$info_label <- renderUI({
     cur <- selected_geo()
@@ -1119,25 +1119,25 @@ server <- function(input, output, session) {
       paste0(length(cur), " Counties — Aggregate")
     } else if (length(cur) == 0) "National" else "County Detail"
   })
-  
+
   output$info_content <- renderUI({
     cur <- selected_geo()
-    
+
     if (info_view() == "aggregate" && length(cur) >= 2) {
       agg_df <- counties_sf |> st_drop_geometry() |> filter(GEOID %in% cur)
       return(HTML(build_aggregate_html(agg_df)))
     }
-    
+
     if (length(cur) == 0) return(HTML(national_info_html))
-    
+
     # Fall back to the most-recently-selected county if nothing (or a since-
     # deselected county) is focused.
     foc <- focused_geo()
     if (is.null(foc) || !(foc %in% cur)) foc <- tail(cur, 1)
-    
+
     row_df <- counties_sf |> st_drop_geometry() |> filter(GEOID == foc)
     if (nrow(row_df) == 0) return(HTML(national_info_html))
-    
+
     # With multiple counties selected, show a clickable name/state banner per
     # county (styled like the single-county header) so any one of them can be
     # picked to view its data variables below.
@@ -1163,10 +1163,10 @@ server <- function(input, output, session) {
         })
       )
     } else NULL
-    
+
     tagList(picker, HTML(build_info_html(row_df, show_header = length(cur) == 1)))
   })
-  
+
   # ── COI subdomain drill-down: repopulate the Subdomain dropdown to match
   # whichever domain is selected in Chart Variable ───────────────────────────
   coi_subdomain_choices <- list(
@@ -1191,14 +1191,14 @@ server <- function(input, output, session) {
       "Wealth"                  = "r_SE_WL_nat"
     )
   )
-  
+
   observeEvent(input$chart_var, {
     subs <- coi_subdomain_choices[[input$chart_var]]
     updateSelectInput(session, "chart_var_sub",
-                      choices  = c("— Domain Overall —" = "", subs),
-                      selected = "")
+                       choices  = c("— Domain Overall —" = "", subs),
+                       selected = "")
   })
-  
+
   # Falls back to the domain-level score whenever no subdomain is picked
   # (or the current chart_var isn't a domain with subdomains at all).
   effective_chart_var <- reactive({
@@ -1209,20 +1209,20 @@ server <- function(input, output, session) {
       input$chart_var
     }
   })
-  
+
   # ── Chart title ────────────────────────────────────────────────────────────────
   output$chart_title <- renderUI({
     lbl <- var_meta$label[var_meta$col == effective_chart_var()]
     div(class = "chart-title", paste0("County Comparison — ", lbl))
   })
-  
+
   # ── Bar chart ──────────────────────────────────────────────────────────────────
   output$bar_chart <- renderPlotly({
     cur    <- selected_geo()
     var    <- effective_chart_var()
     lbl    <- var_meta$label[var_meta$col == var]
     is_shr <- var_meta$is_share[var_meta$col == var]
-    
+
     if (length(cur) == 0) {
       return(plot_ly() |> layout(
         annotations = list(list(
@@ -1234,14 +1234,14 @@ server <- function(input, output, session) {
         plot_bgcolor = "#fff", paper_bgcolor = "#fff"
       ) |> config(displaylogo = FALSE, modeBarButtonsToRemove = MODEBAR_REMOVE))
     }
-    
+
     sel_df <- counties_sf |>
       st_drop_geometry() |>
       filter(GEOID %in% cur) |>
       select(GEOID, NAME, val = all_of(var)) |>
       mutate(type = "county") |>
       arrange(val)
-    
+
     # National reference bar only makes sense for share variables — for raw
     # counts the U.S. total dwarfs any county, squashing the actual county
     # bars down to invisible slivers.
@@ -1255,10 +1255,10 @@ server <- function(input, output, session) {
     } else {
       plot_df <- sel_df
     }
-    
+
     plot_df$NAME <- factor(plot_df$NAME, levels = plot_df$NAME)
     bar_colors   <- ifelse(plot_df$type == "national", BAR_NATL_COLOR, BAR_COUNTY_COLOR)
-    
+
     if (is_shr) {
       plot_df$dv  <- plot_df$val * 100
       plot_df$lab <- sprintf("%.1f%%", plot_df$dv)
@@ -1271,7 +1271,7 @@ server <- function(input, output, session) {
       tick_fmt    <- ","
     }
     hover <- paste0("<b>", plot_df$NAME, "</b><br>", plot_df$lab)
-    
+
     plot_ly(
       data = plot_df, x = ~dv, y = ~NAME, key = ~GEOID,
       type = "bar", orientation = "h", source = "bar_chart",
@@ -1292,7 +1292,7 @@ server <- function(input, output, session) {
       event_register("plotly_unhover") |>
       config(displaylogo = FALSE, modeBarButtonsToRemove = MODEBAR_REMOVE)
   })
-  
+
   # ── Highlight the hovered chart bar's county on the map ────────────────────────
   observeEvent(event_data("plotly_hover", source = "bar_chart"), {
     geoid <- event_data("plotly_hover", source = "bar_chart")$key
@@ -1308,7 +1308,7 @@ server <- function(input, output, session) {
         options = pathOptions(interactive = FALSE)
       )
   })
-  
+
   observeEvent(event_data("plotly_unhover", source = "bar_chart"), {
     leafletProxy("map", session) |> clearGroup("chart_hover")
   })
