@@ -1316,6 +1316,11 @@ server <- function(input, output, session) {
 # (like `Rscript`) fail. But NOT when hosted (shinyapps.io/Connect set
 # SHINY_PORT to tell the app which port to listen on) — forcing a browser
 # open on a headless server errors out and breaks the deployed app.
-local_run <- interactive() || identical(Sys.getenv("SHINY_PORT"), "")
-runApp(shinyApp(ui, server), launch.browser = local_run)
+app <- shinyApp(ui, server)
+
+if (interactive() || identical(Sys.getenv("SHINY_PORT"), "")) {
+  runApp(app, launch.browser = TRUE)
+} else {
+  app
+}
 
