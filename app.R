@@ -3,7 +3,6 @@ library(leaflet)
 library(sf)
 library(dplyr)
 library(plotly)
-library(tigris)
 library(here)
 
 # ── Data ───────────────────────────────────────────────────────────────────────
@@ -61,10 +60,7 @@ for (col in coi_count_cols) {
 national   <- acs_data[acs_data$level == "national", ]
 county_acs <- acs_data[acs_data$level == "county", ]
 
-options(tigris_use_cache = TRUE)
-county_shapes <- counties(cb = TRUE, resolution = "5m", year = 2023) |>
-  select(GEOID, geometry) |>
-  st_transform(4326)
+county_shapes <- readRDS(here("county_shapes.rds"))
 
 counties_sf <- county_shapes |>
   left_join(county_acs |> select(-level), by = "GEOID") |>
@@ -95,10 +91,10 @@ counties_sf <- counties_sf |>
   filter(!is.na(state_name))
 
 # State boundary outlines (shown only once zoomed in past STATE_LINE_ZOOM)
-state_shapes <- states(cb = TRUE, resolution = "5m", year = 2023) |>
+# State boundary outlines (shown only once zoomed in past STATE_LINE_ZOOM)
+state_shapes <- readRDS(here("state_shapes_raw.rds")) |>
   filter(STATEFP %in% state_fips_lookup$fips) |>
-  select(GEOID, geometry) |>
-  st_transform(4326)
+  select(GEOID, geometry)
 
 # ── Brand palette ──────────────────────────────────────────────────────────────
 
