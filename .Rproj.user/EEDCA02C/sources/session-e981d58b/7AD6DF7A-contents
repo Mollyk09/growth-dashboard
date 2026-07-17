@@ -827,8 +827,12 @@ server <- function(input, output, session) {
     
     if (is_shr) {
       vals_clean <- vals[!is.na(vals)]
-      q_breaks   <- quantile(vals_clean, probs = seq(0, 1, 0.2))
-      q_colors   <- get_quintile_colors(var)   # 5 gradient shades for this variable
+      q_breaks   <- unique(quantile(vals_clean, probs = seq(0, 1, 0.2)))
+      if (length(q_breaks) < 2) {
+        q_breaks <- range(vals_clean) + c(-1e-6, 1e-6)
+      }
+      n_bins     <- length(q_breaks) - 1
+      q_colors   <- get_quintile_colors(var)[seq_len(n_bins)]
       pal        <- colorBin(
         palette  = q_colors,
         domain   = vals,
