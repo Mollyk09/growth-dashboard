@@ -2779,10 +2779,16 @@
       "checksum": "5790c291595b0f656096dd3473e9b895"
     },
     "app.R": {
-      "checksum": "a17f46993659142718f94596561f1ef5"
+      "checksum": "c9352df5fc2b9b76b40c694948e6c48c"
+    },
+    "county_shapes.rds": {
+      "checksum": "160d587b45cd78f089f55e5e942e5476"
     },
     "shiny_app_ror_growth.R": {
       "checksum": "e521c9c64aa4d2a3e68eacd273bad7e6"
+    },
+    "state_shapes_raw.rds": {
+      "checksum": "4f3cfe4e681f093b9a5f9cad6942ad57"
     }
   },
   "users": null
