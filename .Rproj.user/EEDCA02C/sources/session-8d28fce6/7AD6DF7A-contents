@@ -753,7 +753,14 @@ server <- function(input, output, session) {
   # ── Base map ──────────────────────────────────────────────────────────────────
   output$map <- renderLeaflet({
     leaflet(counties_sf, options = leafletOptions(preferCanvas = TRUE)) |>
-      addProviderTiles("CartoDB.Positron") |>
+      addTiles(
+        urlTemplate = sprintf(
+          "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png?api_key=%s",
+          Sys.getenv("CARTO_API_KEY")
+        ),
+        attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        options = tileOptions(subdomains = "abcd", maxZoom = 20)
+      ) |>
       setView(lng = -96, lat = 38.5, zoom = 4) |>
       addPolygons(
         layerId      = ~GEOID,
