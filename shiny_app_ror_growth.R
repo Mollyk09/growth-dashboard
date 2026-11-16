@@ -759,7 +759,7 @@ server <- function(input, output, session) {
     leaflet(counties_sf, options = leafletOptions(preferCanvas = TRUE)) |>
       addTiles(
         urlTemplate = sprintf(
-          "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png?api_key=%s",
+          "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png?key=%s",
           Sys.getenv("CARTO_API_KEY")
         ),
         attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
